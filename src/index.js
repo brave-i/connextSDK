@@ -2,11 +2,13 @@ import "./styles.css";
 import "regenerator-runtime/runtime";
 import { providers } from "ethers";
 import { ConnextSdk } from "@connext/vector-sdk";
+import { ethers } from "ethers";
 
 const connextSdk = new ConnextSdk();
 const webProvider = new providers.Web3Provider(window.ethereum);
 let transferQuote = null;
-let senderChannelBalance = null
+//let senderChannelBalance = null
+let senderChannelBalanceUI = null;
 
 async function init() {
   const network = await webProvider.getNetwork();
@@ -21,10 +23,12 @@ async function init() {
       senderAssetId: "0xbd69fC70FA1c3AED524Bb4E82Adc5fcCFFcD79Fa", // Asset/Token Address on Sender Chain
       recipientChainProvider: "https://rpc-mumbai.matic.today", // Rpc Provider Link
       recipientAssetId: "0xfe4F5145f6e09952a5ba9e956ED0C25e3Fa4c7F1", // Asset/Token Address on Recipient Chain
+      iframeSrcOverride: "https://wallet-beta.connext.network",
     });
     
-    senderChannelBalance = result.offChainSenderChainAssetBalanceBn;
-    console.log("1. senderChannelBalance ================ ", senderChannelBalance);
+    //senderChannelBalance = result.offChainSenderChainAssetBalanceBn;
+    senderChannelBalanceUI = ethers.utils.formatUnits(result.offChainSenderChainAssetBalanceBn.toString(), connextSdk?.senderChain?.assetDecimals);
+    console.log("1. senderChannelBalanceUI ================ ", senderChannelBalanceUI);
   } catch (e) {
     const message = "Error initalizing";
     console.log(e, message);
@@ -34,9 +38,12 @@ async function init() {
 
 async function getEstimatedFee(input) {
   try {
-    console.log("2. transferAmount====================", senderChannelBalance + input);
+    console.log("2. transferAmount====================", senderChannelBalanceUI + input);
     const res = await connextSdk.estimateFees({
-      transferAmount: senderChannelBalance + input,
+      //transferAmount: senderChannelBalance + input,
+      transferAmount: (
+        parseFloat(senderChannelBalanceUI ?? "0") + parseFloat(input ?? "0")
+      ).toString(),
     });
     //console.log(res.transferQuote);
     transferQuote = res.transferQuote;
